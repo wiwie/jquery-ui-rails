@@ -186,19 +186,21 @@ $.widget( "ui.tooltip", {
 			contentOption = this.options.content,
 			that = this,
 			eventType = event ? event.type : null;
+			
+		this._registerCloseHandlers( event, target );
 
 		if ( typeof contentOption === "string" ) {
 			return this._open( event, target, contentOption );
 		}
 
 		content = contentOption.call( target[0], function( response ) {
-			// ignore async response if tooltip was closed already
-			if ( !target.data( "ui-tooltip-open" ) ) {
-				return;
-			}
 			// IE may instantly serve a cached response for ajax requests
 			// delay this call to _open so the other call to _open runs first
 			that._delay(function() {
+				// ignore async response if tooltip was closed already
+				if ( !target.data( "ui-tooltip-open" ) ) {
+					return;
+				}
 				// jQuery creates a special event for focusin when it doesn't
 				// exist natively. To improve performance, the native event
 				// object is reused and the type is changed. Therefore, we can't
@@ -216,7 +218,7 @@ $.widget( "ui.tooltip", {
 	},
 
 	_open: function( event, target, content ) {
-		var tooltip, events, delayedShow,
+		var tooltip, delayedShow,
 			positionOption = $.extend( {}, this.options.position );
 
 		if ( !content ) {
@@ -285,8 +287,10 @@ $.widget( "ui.tooltip", {
 		}
 
 		this._trigger( "open", event, { tooltip: tooltip } );
+	},
 
-		events = {
+	_registerCloseHandlers: function( event, target ) {
+		var events = {
 			keyup: function( event ) {
 				if ( event.keyCode === $.ui.keyCode.ESCAPE ) {
 					var fakeEvent = $.Event(event);
@@ -295,7 +299,7 @@ $.widget( "ui.tooltip", {
 				}
 			},
 			remove: function() {
-				this._removeTooltip( tooltip );
+				this._removeTooltip( this._find( target ) );
 			}
 		};
 		if ( !event || event.type === "mouseover" ) {
